@@ -1,50 +1,25 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Spring Basics Assessment</title>
-    <!-- Simple CSS for presentation -->
-    <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-        .task-list { list-style: none; padding: 0; }
-        .task-item { display: flex; justify-content: space-between; padding: 0.5rem; border-bottom: 1px solid #eee; }
-        .completed { text-decoration: line-through; color: #888; }
-        form { display: inline; }
-        input[type="text"] { padding: 0.5rem; width: 70%; }
-        button { padding: 0.5rem; }
-    </style>
+    <title>Upload PDFs</title>
 </head>
 <body>
-    <h1>Spring Boot Task Manager</h1>
-    <p>
-        This is a Thymeleaf template (<b>home.html</b>). It works like Razor/Blazor.<br>
-        <code>th:each</code> is like <code>foreach</code> loop.<br>
-        <code>th:text</code> sets the content of the tag.
-    </p>
+<h2>Upload two PDF documents</h2>
 
-    <!-- Add Task Form -->
-    <form action="/add" method="post">
-        <input type="text" name="description" placeholder="New task..." required>
-        <button type="submit">Add Task</button>
-    </form>
+<form th:action="@{/upload}" method="post" enctype="multipart/form-data">
+    <div>
+        <label>PDF 1:</label>
+        <input type="file" name="pdf1" accept="application/pdf" required />
+    </div>
 
-    <!-- Task List -->
-    <ul class="task-list">
-        <!-- Loop over tasks from the Model -->
-        <li th:each="task : ${tasks}" class="task-item">
-            <span th:text="${task.description}" th:class="${task.completed ? 'completed' : ''}">Task Name</span>
-            
-            <div>
-                <!-- Toggle Button -->
-                <form th:action="@{/toggle/{id}(id=${task.id})}" method="post">
-                    <button type="submit" th:text="${task.completed ? 'Undo' : 'Complete'}">Done</button>
-                </form>
-                
-                <!-- Delete Button -->
-                <form th:action="@{/delete/{id}(id=${task.id})}" method="post">
-                    <button type="submit" style="color: red;">Delete</button>
-                </form>
-            </div>
-        </li>
-    </ul>
+    <div>
+        <label>PDF 2:</label>
+        <input type="file" name="pdf2" accept="application/pdf" required />
+    </div>
+
+    <button type="submit">Upload</button>
+</form>
+
+<p th:if="${message}" th:text="${message}"></p>
 </body>
 </html>
