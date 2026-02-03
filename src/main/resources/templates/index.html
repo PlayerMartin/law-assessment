@@ -1,25 +1,27 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>Upload PDFs</title>
-</head>
-<body>
-<h2>Upload two PDF documents</h2>
+    <head>
+        <title>Upload PDFs</title>
+    </head>
+    <body>
+        <h2>Upload two PDF documents</h2>
 
-<form th:action="@{/upload}" method="post" enctype="multipart/form-data">
-    <div>
-        <label>PDF 1:</label>
-        <input type="file" name="pdf1" accept="application/pdf" required />
-    </div>
+        <form th:action="@{/}" method="post" enctype="multipart/form-data">
+            <div>
+                <label>PDF 1:</label>
+                <input type="file" name="pdf1" accept="application/pdf" required />
+            </div>
 
-    <div>
-        <label>PDF 2:</label>
-        <input type="file" name="pdf2" accept="application/pdf" required />
-    </div>
+            <div>
+                <label>PDF 2:</label>
+                <input type="file" name="pdf2" accept="application/pdf" required />
+            </div>
 
-    <button type="submit">Upload</button>
-</form>
+            <button type="submit">Upload</button>
+        </form>
 
-<p th:if="${message}" th:text="${message}"></p>
-</body>
+        <p th:if="${message}" th:text="${message}"></p>
+
+        <pre th:if="${response}" th:text="${response}"></pre>
+    </body>
 </html>
