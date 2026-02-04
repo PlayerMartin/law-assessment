@@ -22,7 +22,7 @@ A Spring Boot application that uses AI (Google Gemini) to automatically detect c
 
 ```bash
 git clone <repository-url>
-cd assessment
+cd law-assessment
 ```
 
 ### 2. Configure Application Properties
@@ -43,7 +43,13 @@ cd assessment
    gemini-api-key=your_actual_api_key_here
    ```
 
-### 3. Run the Application
+### 3. Navigate to project root
+
+```bash
+cd ../../..
+```
+
+### 4. Run the Application
 
 **Windows:**
 ```cmd
