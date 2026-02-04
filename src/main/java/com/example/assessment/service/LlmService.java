@@ -1,5 +1,9 @@
 package com.example.assessment.service;
 
+import com.example.assessment.utils.Result.Err;
+import com.example.assessment.utils.Result.Ok;
+import com.example.assessment.utils.Result.Result;
+import com.example.assessment.utils.Validation.Validator;
 import jakarta.annotation.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -33,59 +37,60 @@ import java.nio.file.Files;
 public class LlmService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final String GeminiKeyHeader = "x-goog-api-key";
+    private final String BasePromptPath = "prompt/conflict-prompt.txt";
 
     @Value("${gemini-api-key}")
     private String ApiKey;
     @Value("${gemini-model-api}")
     private String Api;
 
-    public String GetResult(MultipartFile pdf1, MultipartFile pdf2) {
-        var entity = BuildHttpRequest(pdf1, pdf2);
-
-        if (entity == null) {
-            return "500 Internal Server Error (Prompt reading error)";
+    public Result<JsonNode, String> GetResult(MultipartFile pdf1, MultipartFile pdf2) {
+        var reqRes = BuildHttpRequest(pdf1, pdf2);
+        if (!reqRes.isOk()) {
+            return new Err<>(reqRes.unwrapErr());
         }
 
+        String response;
         try {
-            String res = restTemplate.exchange(
+            var res = restTemplate.exchange(
                     Api,
                     HttpMethod.POST,
-                    entity,
-                    String.class).getBody();
-
-            return GetResult(res);
-        } catch (JacksonException | RestClientException ex) {
-            return ex.getMessage();
+                    reqRes.unwrap(),
+                    String.class)
+                    .getBody();
+            response = GetResult(res);
+        } catch (JacksonException | NullPointerException ex) {
+            return new Err<>("Invalid outer LLM API response format");
+        } catch (RestClientException ex) {
+            return new Err<>("Could not connect to LLM API server");
         }
+
+        var validated = Validator.Validate(response, pdf1, pdf2);
+        if (validated == null) {
+            return new Err<>("Invalid inner LLM API response format");
+        }
+        return new Ok<>(validated);
     }
 
-    @Nullable
-    private HttpEntity<String> BuildHttpRequest(MultipartFile pdf1, MultipartFile pdf2) {
+    private Result<HttpEntity<String>, String> BuildHttpRequest(MultipartFile pdf1, MultipartFile pdf2) {
         HttpHeaders headers = new HttpHeaders();
         headers.set(GeminiKeyHeader, ApiKey);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         StringBuilder prompt = new StringBuilder();
-
-        try {
-            var resource = new ClassPathResource("prompt/conflict-prompt.txt");
-            prompt.append(Files.readString(resource.getFile().toPath(), StandardCharsets.UTF_8));
-        } catch (IOException | OutOfMemoryError | SecurityException ex) {
-            return null;
+        prompt = AppendBasePrompt(prompt);
+        if (prompt == null) {
+            return new Err<>("Error reading base prompt file");
         }
 
-        try (PDDocument document = Loader.loadPDF(pdf1.getBytes())) {
-            String text = new PDFTextStripper().getText(document);
-            prompt.append("\n").append(pdf1.getOriginalFilename()).append("\n").append(text).append("\n");
-        } catch (IOException e) {
-            return null;
+        prompt = AppendPDF(prompt, pdf1);
+        if (prompt == null) {
+            return new Err<>("Error reading pdf1");
         }
 
-        try (PDDocument document = Loader.loadPDF(pdf2.getBytes())) {
-            String text = new PDFTextStripper().getText(document);
-            prompt.append("\n").append(pdf2.getOriginalFilename()).append("\n").append(text).append("\n");
-        } catch (IOException e) {
-            return null;
+        prompt = AppendPDF(prompt, pdf2);
+        if (prompt == null) {
+            return new Err<>("Error reading pdf2");
         }
 
         // Use ObjectMapper to safely escape the prompt text into valid JSON
@@ -99,39 +104,57 @@ public class LlmService {
 
         try {
             String body = mapper.writeValueAsString(wrapper);
-            return new HttpEntity<>(body, headers);
+            return new Ok<>(new HttpEntity<>(body, headers));
         } catch (Exception e) {
+            return new Err<>("Error while creating request body");
+        }
+    }
+
+    @Nullable
+    private StringBuilder AppendBasePrompt(StringBuilder prompt) {
+        try {
+            var resource = new ClassPathResource(BasePromptPath);
+            prompt.append(Files.readString(resource.getFile().toPath(), StandardCharsets.UTF_8));
+            return prompt;
+        } catch (IOException | OutOfMemoryError | SecurityException ex) {
             return null;
         }
     }
 
-    private String GetResult(String body) {
-        ObjectMapper mapper = new ObjectMapper();
-        try {
-            JsonNode root = mapper.readTree(body);
-            return root
-                    .path("candidates")
-                    .get(0)
-                    .path("content")
-                    .path("parts")
-                    .get(0)
-                    .path("text")
-                    .asString();
-        } catch (Exception e) {
-            return "Error parsing response: " + e.getMessage();
+    @Nullable
+    private StringBuilder AppendPDF(StringBuilder prompt,  MultipartFile pdf) {
+        try (PDDocument document = Loader.loadPDF(pdf.getBytes())) {
+            String text = new PDFTextStripper().getText(document);
+            prompt.append("\n").append(pdf.getOriginalFilename()).append("\n").append(text).append("\n");
+        } catch (IOException e) {
+            return null;
         }
+        return prompt;
+    }
+
+    private String GetResult(String body) throws JacksonException, NullPointerException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(body);
+        return root
+                .path("candidates")
+                .get(0)
+                .path("content")
+                .path("parts")
+                .get(0)
+                .path("text")
+                .asString();
     }
 
     // Internal DTOs for JSON structure
-    public static class Wrapper {
+    private static class Wrapper {
         public Content[] contents;
     }
 
-    public static class Content {
+    private static class Content {
         public Part[] parts;
     }
 
-    public static class Part {
+    private static class Part {
         public String text;
     }
 }

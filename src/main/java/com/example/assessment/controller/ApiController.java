@@ -2,6 +2,9 @@ package com.example.assessment.controller;
 
 import com.example.assessment.service.LlmService;
 import jakarta.annotation.Nullable;
+import org.apache.pdfbox.Loader;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,19 +17,6 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 
-/**
- * PARALLEL: This is a standard MVC Controller.
- * 
- * - @Controller: Indicates this class handles web requests and returns Views
- * (HTML).
- * Equivalent to inheriting from `Controller` in ASP.NET MVC.
- * 
- * Differences:
- * - In C#, actions return `IActionResult`. In Spring, they usually return
- * `String` (the view name).
- * - `Model model`: Similar to `ViewBag` or passing a model object to
- * `View(model)`.
- */
 @Controller
 public class ApiController {
 
@@ -47,38 +37,28 @@ public class ApiController {
             @RequestParam("pdf2") MultipartFile pdf2,
             Model model) {
 
-        System.out.println("Processing: " + pdf1.getOriginalFilename() + pdf2.getOriginalFilename());
-
-        String response = llmService.GetResult(pdf1, pdf2);
-
-        String prettyResponse = GetPrettyResponse(response);
-        if (prettyResponse == null) {
-            model.addAttribute("message", "500 Internal Server Error (LLM response format)");
+        var res = llmService.GetResult(pdf1, pdf2);
+        if (!res.isOk()) {
+            model.addAttribute("message", "500 Internal Server Error (" + res.unwrapErr() + ")");
+            model.addAttribute("response", "{}");
             return "index";
         }
 
-        model.addAttribute("response", prettyResponse);
+        model.addAttribute("filename1", pdf1.getOriginalFilename());
+        model.addAttribute("text1", extractText(pdf1));
+        model.addAttribute("filename2", pdf2.getOriginalFilename());
+        model.addAttribute("text2", extractText(pdf2));
+
+        model.addAttribute("message", "Files uploaded and processed successfully");
+        model.addAttribute("response", res.unwrap().toString());
         return "index";
     }
 
-    private String GetPrettyResponse(String response) {
-        ObjectMapper mapper = new ObjectMapper();
-
-        JsonNode node;
-        try {
-            node = mapper.readTree(response);
-        } catch (JacksonException ex) {
-            return null;
-
+    private String extractText(MultipartFile file) {
+        try (PDDocument document = Loader.loadPDF(file.getBytes())) {
+            return new PDFTextStripper().getText(document);
+        } catch (IOException e) {
+            return "Error reading file: " + e.getMessage();
         }
-
-        String prettyJson;
-        try {
-            prettyJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-        } catch (JacksonException e) {
-            prettyJson = node.toString();
-        }
-
-        return prettyJson;
     }
 }
