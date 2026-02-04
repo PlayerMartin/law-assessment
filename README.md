@@ -51,12 +51,6 @@ cd ../../..
 
 ### 4. Run the Application
 
-**Windows:**
-```cmd
-.\gradlew.bat bootRun
-```
-
-**Mac/Linux:**
 ```bash
 ./gradlew bootRun
 ```
@@ -66,8 +60,8 @@ The application will start on `http://localhost:8080`
 ## How to Use
 
 1. Open your browser and navigate to `http://localhost:8080`
-2. Upload two PDF documents containing legal text
-3. Click **"Analyze Conflicts"**
+2. Upload two PDF documents (sample files are available in the `law-examples` directory)
+3. Click the **"Analyze Conflicts"** button
 4. Wait for the AI analysis to complete
 5. Review the detected contradictions in the sidebar
 6. Click on any conflict card to highlight and scroll to the relevant sections in both documents
