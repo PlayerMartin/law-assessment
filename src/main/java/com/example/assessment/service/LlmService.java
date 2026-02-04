@@ -26,13 +26,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
-/**
- * PARALLEL: This is your Business Logic Layer.
- * 
- * - @Service: Registers this class in the Dependency Injection container (IOC).
- * Equivalent to `services.AddScoped<TaskService>();` in C# Startup.cs /
- * Program.cs.
- */
 @Service
 public class LlmService {
     private final RestTemplate restTemplate = new RestTemplate();

@@ -6,6 +6,7 @@ Instructions for analysis:
 3. Include only clear contradictions supported by text excerpts.
 4. If a contradiction involves more than two documents or sections, include all relevant items in the `"sections"` array.
 5. Ensure your reasoning is accurate, concise, and fully grounded in the text.
+6. If a contradiction is found, order the "sections" array such that the first entry is always the earliest document in the provided documents list, and subsequent entries follow the same document order. This ordering must reflect the original input order, not the perceived importance of the conflict or the file names.
 
 Output format: Provide the response strictly in JSON format, without any surrounding markdown, code fences, or other text. Do not include json or ``` in your response. The output should be valid JSON that can be directly parsed.
 Response format (strictly follow this JSON schema):
@@ -24,13 +25,7 @@ Response format (strictly follow this JSON schema):
       ],
       "short_description": "string"
     }
-  ],
-  "summary": {
-    "total_contradictions_found": 0,
-    "documents_analyzed": [
-      "string"
-    ]
-  }
+  ]
 }
 
 Additional guidance for output quality:

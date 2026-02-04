@@ -31,7 +31,7 @@ public class ApiController {
         return "index";
     }
 
-    @PostMapping("/")
+    @PostMapping("/upload")
     public String upload(
             @RequestParam("pdf1") MultipartFile pdf1,
             @RequestParam("pdf2") MultipartFile pdf2,
