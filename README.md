@@ -1,45 +1,96 @@
-# Spring Boot vs .NET Core / C# Assessment Template
+# Legal Document Conflict Analyzer
 
-This project is a simple Task Manager designed to showcase **Spring Boot** concepts for a **.NET developer**.
-It implements a standard MVC architecture using Thymeleaf (servers-side rendering) and JPA (ORM).
+A Spring Boot application that uses AI (Google Gemini) to automatically detect contradictions and conflicts between legal documents. Upload two PDF documents, and the system will analyze them to identify any inconsistencies in obligations, rights, definitions, or applicability.
 
-## Quick Concepts Map
+## Features
 
-| Spring Boot Concept | .NET / C# Equivalent |
-|---------------------|----------------------|
-| `pom.xml` / `build.gradle` | `.csproj` (NuGet packages) |
-| `@SpringBootApplication` `main()` | `Program.cs` / `Startup.cs` |
-| `application.properties` | `appsettings.json` |
-| `@Controller` | `Controller` (MVC) |
-| `@Service` | Service Class (registered in DI) |
-| `@Repository` (Interface) | `DbContext` / `DbSet` |
-| `@Entity` | `[Table]` / POCO Class |
-| `@Autowired` | Constructor Injection |
-| Thymeleaf (`.html`) | Razor (`.cshtml`) |
-| Gradle (`./gradlew`) | `dotnet` CLI |
+- **PDF Document Upload**: Upload two legal documents in PDF format
+- **AI-Powered Analysis**: Uses Google Gemini LLM to detect contradictions
+- **Interactive UI**: Side-by-side document view with highlighted conflicts
+- **Conflict Navigation**: Click on detected conflicts to jump to relevant sections in both documents
+- **Robust Error Handling**: Validates LLM responses and handles edge cases gracefully
+
+## Prerequisites
+
+- **Java 21** or higher
+- **Gradle** (wrapper included, no installation needed)
+- **Google Gemini API Key** ([Get one here](https://ai.google.dev/))
+
+## Setup Instructions
+
+### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd assessment
+```
+
+### 2. Configure Application Properties
+
+**Important:** You must create an `application.properties` file before running the application.
+
+1. Navigate to `src/main/resources/`
+2. Copy the example file:
+   ```bash
+   cp application.properties.example application.properties
+   ```
+   Or on Windows:
+   ```cmd
+   copy application.properties.example application.properties
+   ```
+3. Edit `application.properties` and replace `YOUR_GEMINI_API_KEY` with your actual Gemini API key:
+   ```properties
+   gemini-api-key=your_actual_api_key_here
+   ```
+
+### 3. Run the Application
+
+**Windows:**
+```cmd
+.\gradlew.bat bootRun
+```
+
+**Mac/Linux:**
+```bash
+./gradlew bootRun
+```
+
+The application will start on `http://localhost:8080`
+
+## How to Use
+
+1. Open your browser and navigate to `http://localhost:8080`
+2. Upload two PDF documents containing legal text
+3. Click **"Analyze Conflicts"**
+4. Wait for the AI analysis to complete
+5. Review the detected contradictions in the sidebar
+6. Click on any conflict card to highlight and scroll to the relevant sections in both documents
 
 ## Project Structure
 
-- **src/main/resources/application.properties**: Configuration (DB connection, Logging).
-- **src/main/java/.../model/Task.java**: The database entity.
-- **src/main/java/.../repository/TaskRepository.java**: The data access layer.
-- **src/main/java/.../service/TaskService.java**: The business logic.
-- **src/main/java/.../controller/TaskController.java**: The web controller.
+```
+src/main/java/com/example/assessment/
+├── controller/
+│   └── ApiController.java          # Handles HTTP requests and renders UI
+├── service/
+│   └── LlmService.java             # Manages LLM API calls and PDF processing
+├── utils/
+│   ├── Result/                     # Result pattern
+│   └── Validation/                 # Validates LLM response structure
+└── AssessmentApplication.java      # Main Spring Boot entry point
 
-## How to Run
+src/main/resources/
+├── templates/
+│   └── index.html                  # Thymeleaf template with interactive UI
+├── prompt/
+│   └── conflict-prompt.txt         # LLM system prompt with instructions
+└── application.properties.example  # Configuration template
+```
 
-1. Open terminal in this folder.
-2. Run the application:
-   - **Windows**: `.\gradlew.bat bootRun`
-   - **Mac/Linux**: `./gradlew bootRun`
-3. Access the app at: `http://localhost:8080`
-4. Access Database Console: `http://localhost:8080/h2-console`
-   - JDBC URL: `jdbc:h2:mem:testdb`
-   - User: `sa`
-   - Password: `password`
+## API Configuration
 
-## Key Differences to Note
+The application uses Google Gemini 2.5 Flash model by default. You can modify the model endpoint in `application.properties`:
 
-- **Magic Repositories**: In Spring Data JPA, you just define an *Interface* extending `JpaRepository`. You don't implement it. Spring generates the code at runtime.
-- **Annotations**: Spring relies heavily on annotations (`@`) for everything (Dependency Injection, Routing, DB Mapping).
-- **Gradle**: This project uses Gradle. It creates a wrapper (`gradlew`) so you don't even need Gradle installed globally.
+```properties
+gemini-model-api=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
+```

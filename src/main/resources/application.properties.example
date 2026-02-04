@@ -1,0 +1,4 @@
+spring.application.name=assessment
+
+gemini-api-key=YOUR_GEMINI_API_KEY
+gemini-model-api=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
